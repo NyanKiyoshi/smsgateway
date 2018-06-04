@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URLDecoder;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.ServerSocket;
@@ -249,9 +250,16 @@ public class MySMSGatewayMainActivity extends Activity {
 							new InputStreamReader(socket.getInputStream()));
 					DataOutputStream out = new DataOutputStream(
 							socket.getOutputStream());
+
 					// get the first line of the HTTP GET request
 					// sample : GET /?phone=+911234567890&message=HelloWorld HTTP/1.1
 					String data = in.readLine();
+
+					// skip if no data was received
+					if (data == null) {
+						continue;
+					}
+
 					// get the substring after GET /?
 					data = data.substring(6);
 					
@@ -265,7 +273,7 @@ public class MySMSGatewayMainActivity extends Activity {
 						String[] myparams = data.split("&");
 						if (data.contains("=")) {
 							phoneNumber = myparams[0].split("=")[1];
-							message = myparams[1].split("=")[1];
+							message = URLDecoder.decode(myparams[1].split("=")[1], "UTF-8");
 							Log.i(TAG, "Got a request to sent an SMS.");
 							Log.i(TAG, "Phone Number: " + phoneNumber);
 							Log.i(TAG, "Message: " + message);
