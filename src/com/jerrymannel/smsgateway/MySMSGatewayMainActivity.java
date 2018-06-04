@@ -5,19 +5,14 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URLDecoder;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Enumeration;
-
-import com.jerrymannel.smsgateway.R;
 
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
@@ -25,6 +20,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.telephony.SmsManager;
+import android.text.format.Formatter;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -190,22 +186,9 @@ public class MySMSGatewayMainActivity extends Activity {
 	}
 
 	private void getLocalIpAddress() {
-		try {
-			for (Enumeration<NetworkInterface> en = NetworkInterface
-					.getNetworkInterfaces(); en.hasMoreElements();) {
-				NetworkInterface intf = en.nextElement();
-				if (intf.getName().contentEquals("wlan0")) {
-					for (Enumeration<InetAddress> enumIpAddr = intf
-							.getInetAddresses(); enumIpAddr.hasMoreElements();) {
-						InetAddress inetAddress = enumIpAddr.nextElement();
-						if (!inetAddress.isLoopbackAddress()) {
-							ipAddress = inetAddress.getHostAddress().toString();
-						}
-					}
-				}
-			}
-		} catch (SocketException ex) {
-			System.out.println(ex.toString());
+		WifiManager wm = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+		if (wm != null) {
+			ipAddress = Formatter.formatIpAddress(wm.getConnectionInfo().getIpAddress());
 		}
 	}
 
