@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URLDecoder;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
@@ -13,6 +12,7 @@ import java.util.Date;
 
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -124,6 +124,8 @@ public class MySMSGatewayMainActivity extends Activity {
     }
 
     protected void onDestroy() {
+        super.onDestroy();
+
         Log.i(TAG, "Murderer!!! The app has been killed!. Stopping server!");
         if (server != null)
             server.cancel(true);
@@ -220,21 +222,35 @@ public class MySMSGatewayMainActivity extends Activity {
     }
 
     private class HTTPServer extends AsyncTask<String, Void, Void> {
+        private void sendHTTPBadRequest(DataOutputStream outputStream) throws IOException {
+            outputStream.writeBytes(
+                    "HTTP/1.1 400 Bad Request\n"
+                            + "Connection: close\n"
+                            + "\n");
+        }
+
+        private void sendHTTPOK(DataOutputStream outputStream) throws IOException {
+            outputStream.writeBytes(
+                    "HTTP/1.1 200 OK\n"
+                            + "Connection: close\n"
+                            + "\n");
+        }
+
         protected Void doInBackground(String... params) {
             try {
                 ServerSocket server = new ServerSocket(port);
                 Log.i(TAG, "Port Set. Server started!");
                 while (true) {
                     Socket socket = server.accept();
+
                     if (isCancelled()) {
                         socket.close();
                         server.close();
                         break;
                     }
-                    BufferedReader in = new BufferedReader(
-                            new InputStreamReader(socket.getInputStream()));
-                    DataOutputStream out = new DataOutputStream(
-                            socket.getOutputStream());
+
+                    BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                    DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
                     // get the first line of the HTTP GET request
                     // sample : GET /?phone=+911234567890&message=HelloWorld HTTP/1.1
@@ -246,31 +262,26 @@ public class MySMSGatewayMainActivity extends Activity {
                     }
 
                     // get the substring after GET /?
-                    data = data.substring(6);
+                    data = data.substring(5);
+                    Uri url = Uri.parse(data);
+
+                    phoneNumber = url.getQueryParameter("phone");
+                    message = url.getQueryParameter("message");
 
                     // if the URL doesn't contain the sting phone, do nothing.
-                    if (!data.contains("phone")) {
+                    if (phoneNumber == null || message == null) {
                         Log.i(TAG, "Invalid URL");
                         showAlert("Invalid URL");
+                        this.sendHTTPBadRequest(out);
                     } else {
-                        // get the data before  HTTP/1.1
-                        data = data.substring(0, data.length() - 9);
-                        String[] myparams = data.split("&");
-                        if (data.contains("=")) {
-                            // FIXME: missing &message raise exception
-                            phoneNumber = myparams[0].split("=")[1];
-                            message = URLDecoder.decode(myparams[1].split("=")[1], "UTF-8");
-                            Log.i(TAG, "Got a request to sent an SMS.");
-                            Log.i(TAG, "Phone Number: " + phoneNumber);
-                            Log.i(TAG, "Message: " + message);
+                        Log.i(TAG, "Got a request to sent an SMS.");
+                        Log.i(TAG, "Phone Number: " + phoneNumber);
+                        Log.i(TAG, "Message: " + message);
 
-                            sendSMS();
-                        }
+                        sendSMS();
+                        this.sendHTTPOK(out);
                     }
 
-                    out.writeBytes("HTTP/1.1 200 OK \r\n");
-                    out.writeBytes("Connection: close\r\n");
-                    out.writeBytes("\r\n");
                     out.close();
                     in.close();
                 }
