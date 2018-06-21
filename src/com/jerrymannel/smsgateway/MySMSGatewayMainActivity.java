@@ -253,7 +253,7 @@ public class MySMSGatewayMainActivity extends Activity {
                     DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
                     // get the first line of the HTTP GET request
-                    // sample : GET /?phone=+911234567890&message=HelloWorld HTTP/1.1
+                    // sample : GET /?phone=%2B911234567890&message=HelloWorld HTTP/1.1
                     String data = in.readLine();
 
                     // skip if no data was received
