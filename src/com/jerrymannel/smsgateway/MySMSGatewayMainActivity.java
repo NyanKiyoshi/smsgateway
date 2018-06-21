@@ -8,6 +8,7 @@ import java.net.URLDecoder;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 import android.net.ConnectivityManager;
@@ -200,9 +201,10 @@ public class MySMSGatewayMainActivity extends Activity {
 				linearLayout_message.getContext(), null);
 
 		try {
-			sms.sendTextMessage(phoneNumber, null, message, null, null);
-			v1.setData(phoneNumber, message, currentTime);
-			showAlert("Message Sent!");
+            ArrayList<String> parts = sms.divideMessage(message);
+            sms.sendMultipartTextMessage(phoneNumber, null, parts, null, null);
+            v1.setData(phoneNumber, message, currentTime);
+            showAlert("Message Sent!");
 		} catch (Exception e) {
 			showAlert("SMS failed, please try again later!");
 			v1.setData(phoneNumber, "[FAIL]" + message, currentTime);
@@ -255,6 +257,7 @@ public class MySMSGatewayMainActivity extends Activity {
 						data = data.substring(0, data.length() - 9);
 						String[] myparams = data.split("&");
 						if (data.contains("=")) {
+                            // FIXME: missing &message raise exception
 							phoneNumber = myparams[0].split("=")[1];
 							message = URLDecoder.decode(myparams[1].split("=")[1], "UTF-8");
 							Log.i(TAG, "Got a request to sent an SMS.");
