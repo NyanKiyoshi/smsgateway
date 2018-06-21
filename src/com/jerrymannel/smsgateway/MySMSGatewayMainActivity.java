@@ -261,8 +261,8 @@ public class MySMSGatewayMainActivity extends Activity {
                         continue;
                     }
 
-                    // get the substring after GET /?
-                    data = data.substring(5);
+                    // get the substring after GET /? and before HTTP/x.x
+                    data = data.substring(5, data.length() - 9);
                     Uri url = Uri.parse(data);
 
                     phoneNumber = url.getQueryParameter("phone");
