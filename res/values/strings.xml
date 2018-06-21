@@ -18,7 +18,17 @@
     <string name="menuAbout">About</string>
 
     <string name="aboutAuthor">Designed and Developed by Jerry M.</string>
-    <string name="aboutIntro">asdas</string>
+    <string name="aboutIntro">
+        Open the app and start the server. The app displays the URL to which the request has to be made.\n\n
+        The HTTP GET URL is as shown below,\n\n
+
+        http://&lt;device ip&gt;:18080/?&lt;phone number&gt;=&lt;short message&gt;\n\n
+
+        e.g. http://192.168.2.3:18080/?phone=%2B919912345678&amp;message=HelloWorld\n\n
+
+        The app MUST be running in the foreground to access the service.
+        If the app closes or goes into the background, the server stops automatically.
+    </string>
     
     <string name="dont_allow">Don\'t allow the user access</string>
     <string name="allow">Allow the user access</string>
