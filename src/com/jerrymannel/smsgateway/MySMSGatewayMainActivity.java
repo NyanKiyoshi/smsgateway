@@ -35,249 +35,249 @@ import android.widget.Toast;
 
 public class MySMSGatewayMainActivity extends Activity {
 
-	private LinearLayout linerLayout_server;
-	private LinearLayout linearLayout_message;
-	private Switch switch_server;
-	private TextView textView_serverStatus;
-	private TextView textView_comment;
-	private SharedPreferences prefs;
+    private LinearLayout linerLayout_server;
+    private LinearLayout linearLayout_message;
+    private Switch switch_server;
+    private TextView textView_serverStatus;
+    private TextView textView_comment;
+    private SharedPreferences prefs;
 
-	private String ipAddress;
-	private int port;
-	private HTTPServer server;
-	private SimpleDateFormat sdf;
-	private String currentTime;
+    private String ipAddress;
+    private int port;
+    private HTTPServer server;
+    private SimpleDateFormat sdf;
+    private String currentTime;
 
-	private SmsManager sms;
-	private String phoneNumber;
-	private String message;
+    private SmsManager sms;
+    private String phoneNumber;
+    private String message;
 
-	private static final String TAG = "mysmsgateway";
+    private static final String TAG = "mysmsgateway";
 
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
-		checkNetworkState();
-		getLocalIpAddress();
+        checkNetworkState();
+        getLocalIpAddress();
 
-		sms = SmsManager.getDefault();
+        sms = SmsManager.getDefault();
 
-		prefs = this.getSharedPreferences("com.jerrymannel.mysmsgateway",
-				Context.MODE_PRIVATE);
-		if (prefs.getInt("port", 0) == 0) {
-			SharedPreferences.Editor editor = prefs.edit();
-			editor.putInt("port", 18080);
-			editor.commit();
-			port = 18080;
-		}
+        prefs = this.getSharedPreferences("com.jerrymannel.mysmsgateway", Context.MODE_PRIVATE);
 
-		linerLayout_server = (LinearLayout) findViewById(R.id.linearLayout_server);
-		linearLayout_message = (LinearLayout) findViewById(R.id.linearLayout_message);
-		textView_serverStatus = (TextView) findViewById(R.id.textView_serverStaus);
-		textView_comment = (TextView) findViewById(R.id.textView_comment);
-		switch_server = (Switch) findViewById(R.id.switch_server);
-		server = null;
+        if (prefs.getInt("port", 0) == 0) {
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putInt("port", 18080);
+            editor.commit();
+            port = 18080;
+        }
 
-		switch_server.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-			public void onCheckedChanged(CompoundButton buttonView,
-					boolean isChecked) {
-				if (checkNetworkState()) {
-					if (isChecked) {
-						textView_serverStatus.setText(R.string.serverOn);
-						linerLayout_server
-								.setBackgroundResource(R.drawable.backgroud_start);
-						port = prefs.getInt("port", 0);
-						Log.i(TAG, "Port set to " + port);
-						textView_comment
-								.setText(getString(R.string.connectComment)
-										+ "http://" + ipAddress + ":" + port);
+        linerLayout_server = (LinearLayout) findViewById(R.id.linearLayout_server);
+        linearLayout_message = (LinearLayout) findViewById(R.id.linearLayout_message);
+        textView_serverStatus = (TextView) findViewById(R.id.textView_serverStaus);
+        textView_comment = (TextView) findViewById(R.id.textView_comment);
+        switch_server = (Switch) findViewById(R.id.switch_server);
+        server = null;
 
-						Log.i(TAG, "Starting server ...");
-						server = new HTTPServer();
-						server.execute("");
-					} else {
-						textView_serverStatus.setText(R.string.serverOff);
-						linerLayout_server
-								.setBackgroundResource(R.drawable.backgroud_stop);
-						textView_comment.setText(R.string.stopComment);
-						server.cancel(true);
-						server = null;
-						Log.i(TAG, "Server stopped!");
-					}
-				} else {
-					switch_server.toggle();
-				}
-			}
-		});
-	}
+        switch_server.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView,
+                                         boolean isChecked) {
+                if (checkNetworkState()) {
+                    if (isChecked) {
+                        textView_serverStatus.setText(R.string.serverOn);
+                        linerLayout_server
+                                .setBackgroundResource(R.drawable.backgroud_start);
+                        port = prefs.getInt("port", 0);
+                        Log.i(TAG, "Port set to " + port);
+                        textView_comment
+                                .setText(getString(R.string.connectComment)
+                                        + "http://" + ipAddress + ":" + port);
 
-	protected void onPause() {
-		Log.i(TAG, "App has gone into pause mode. Stopping server!");
-		if (server != null)
-			server.cancel(true);
-		textView_serverStatus.setText(R.string.serverOff);
-		linerLayout_server.setBackgroundResource(R.drawable.backgroud_stop);
-		textView_comment.setText(R.string.initialComment);
-		switch_server.setChecked(false);
-		super.onPause();
-	}
+                        Log.i(TAG, "Starting server ...");
+                        server = new HTTPServer();
+                        server.execute("");
+                    } else {
+                        textView_serverStatus.setText(R.string.serverOff);
+                        linerLayout_server
+                                .setBackgroundResource(R.drawable.backgroud_stop);
+                        textView_comment.setText(R.string.stopComment);
+                        server.cancel(true);
+                        server = null;
+                        Log.i(TAG, "Server stopped!");
+                    }
+                } else {
+                    switch_server.toggle();
+                }
+            }
+        });
+    }
 
-	protected void onDestroy() {
-		Log.i(TAG, "Murderer!!! The app has been killed!. Stopping server!");
-		if (server != null)
-			server.cancel(true);
-		textView_serverStatus.setText(R.string.serverOff);
-		linerLayout_server.setBackgroundResource(R.drawable.backgroud_stop);
-		textView_comment.setText(R.string.initialComment);
-		switch_server.setChecked(false);
-		super.onPause();
-	}
+    protected void onPause() {
+        Log.i(TAG, "App has gone into pause mode. Stopping server!");
+        if (server != null)
+            server.cancel(true);
+        textView_serverStatus.setText(R.string.serverOff);
+        linerLayout_server.setBackgroundResource(R.drawable.backgroud_stop);
+        textView_comment.setText(R.string.initialComment);
+        switch_server.setChecked(false);
+        super.onPause();
+    }
 
-	protected void onRestart() {
-		Log.i(TAG, "App restart has occured.");
-		if (server != null)
-			server.cancel(true);
-		textView_serverStatus.setText(R.string.serverOff);
-		linerLayout_server.setBackgroundResource(R.drawable.backgroud_stop);
-		textView_comment.setText(R.string.initialComment);
-		switch_server.setChecked(false);
-		super.onPause();
-		super.onRestart();
-	}
+    protected void onDestroy() {
+        Log.i(TAG, "Murderer!!! The app has been killed!. Stopping server!");
+        if (server != null)
+            server.cancel(true);
+        textView_serverStatus.setText(R.string.serverOff);
+        linerLayout_server.setBackgroundResource(R.drawable.backgroud_stop);
+        textView_comment.setText(R.string.initialComment);
+        switch_server.setChecked(false);
+        super.onPause();
+    }
 
-	public boolean onCreateOptionsMenu(Menu menu) {
-		MenuInflater mi = getMenuInflater();
-		mi.inflate(R.menu.options_menu, menu);
-		return true;
-	}
+    protected void onRestart() {
+        Log.i(TAG, "App restart has occured.");
+        if (server != null)
+            server.cancel(true);
+        textView_serverStatus.setText(R.string.serverOff);
+        linerLayout_server.setBackgroundResource(R.drawable.backgroud_stop);
+        textView_comment.setText(R.string.initialComment);
+        switch_server.setChecked(false);
+        super.onPause();
+        super.onRestart();
+    }
 
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.item_clear:
-			linearLayout_message.removeAllViews();
-			break;
-		case R.id.item_setting:
-			startActivity(new Intent(this, SettingsView.class));
-			break;
-		case R.id.item_about:
-			startActivity(new Intent(this, AboutView.class));
-			break;
-		}
-		return super.onOptionsItemSelected(item);
-	}
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater mi = getMenuInflater();
+        mi.inflate(R.menu.options_menu, menu);
+        return true;
+    }
 
-	private boolean checkNetworkState() {
-		ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-		NetworkInfo netInfo = cm.getActiveNetworkInfo();
-		if (netInfo != null && netInfo.isConnectedOrConnecting()) {
-			return true;
-		}
-		showAlert("No active network connections \navailable.");
-		return false;
-	}
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.item_clear:
+                linearLayout_message.removeAllViews();
+                break;
+            case R.id.item_setting:
+                startActivity(new Intent(this, SettingsView.class));
+                break;
+            case R.id.item_about:
+                startActivity(new Intent(this, AboutView.class));
+                break;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
-	private void showAlert(final String s) {
-		runOnUiThread(new Runnable() {
-			public void run() {
-				Toast.makeText(MySMSGatewayMainActivity.this, s,
-						Toast.LENGTH_SHORT).show();
-			}
-		});
-	}
+    private boolean checkNetworkState() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        if (netInfo != null && netInfo.isConnectedOrConnecting()) {
+            return true;
+        }
+        showAlert("No active network connections \navailable.");
+        return false;
+    }
 
-	private void getLocalIpAddress() {
-		WifiManager wm = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
-		if (wm != null) {
-			ipAddress = Formatter.formatIpAddress(wm.getConnectionInfo().getIpAddress());
-		}
-	}
+    private void showAlert(final String s) {
+        runOnUiThread(new Runnable() {
+            public void run() {
+                Toast.makeText(MySMSGatewayMainActivity.this, s,
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 
-	private void sendSMS() {
-		sdf = (SimpleDateFormat) SimpleDateFormat.getTimeInstance();
-		currentTime = sdf.format(new Date());
+    private void getLocalIpAddress() {
+        WifiManager wm = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+        if (wm != null) {
+            ipAddress = Formatter.formatIpAddress(wm.getConnectionInfo().getIpAddress());
+        }
+    }
 
-		final MessageView v1 = new MessageView(
-				linearLayout_message.getContext(), null);
+    private void sendSMS() {
+        sdf = (SimpleDateFormat) SimpleDateFormat.getTimeInstance();
+        currentTime = sdf.format(new Date());
 
-		try {
+        final MessageView v1 = new MessageView(
+                linearLayout_message.getContext(), null);
+
+        try {
             ArrayList<String> parts = sms.divideMessage(message);
             sms.sendMultipartTextMessage(phoneNumber, null, parts, null, null);
             v1.setData(phoneNumber, message, currentTime);
             showAlert("Message Sent!");
-		} catch (Exception e) {
-			showAlert("SMS failed, please try again later!");
-			v1.setData(phoneNumber, "[FAIL]" + message, currentTime);
-			e.printStackTrace();
-		}
+        } catch (Exception e) {
+            showAlert("SMS failed, please try again later!");
+            v1.setData(phoneNumber, "[FAIL]" + message, currentTime);
+            e.printStackTrace();
+        }
 
-		runOnUiThread(new Runnable() {
-			public void run() {
-				linearLayout_message.addView(v1);
-			}
-		});
+        runOnUiThread(new Runnable() {
+            public void run() {
+                linearLayout_message.addView(v1);
+            }
+        });
 
-	}
+    }
 
-	private class HTTPServer extends AsyncTask<String, Void, Void> {
-		protected Void doInBackground(String... params) {
-			try {
-				ServerSocket server = new ServerSocket(port);
-				Log.i(TAG, "Port Set. Server started!");
-				while (true) {
-					Socket socket = server.accept();
-					if (isCancelled()) {
-						socket.close();
-						server.close();
-						break;
-					}
-					BufferedReader in = new BufferedReader(
-							new InputStreamReader(socket.getInputStream()));
-					DataOutputStream out = new DataOutputStream(
-							socket.getOutputStream());
+    private class HTTPServer extends AsyncTask<String, Void, Void> {
+        protected Void doInBackground(String... params) {
+            try {
+                ServerSocket server = new ServerSocket(port);
+                Log.i(TAG, "Port Set. Server started!");
+                while (true) {
+                    Socket socket = server.accept();
+                    if (isCancelled()) {
+                        socket.close();
+                        server.close();
+                        break;
+                    }
+                    BufferedReader in = new BufferedReader(
+                            new InputStreamReader(socket.getInputStream()));
+                    DataOutputStream out = new DataOutputStream(
+                            socket.getOutputStream());
 
-					// get the first line of the HTTP GET request
-					// sample : GET /?phone=+911234567890&message=HelloWorld HTTP/1.1
-					String data = in.readLine();
+                    // get the first line of the HTTP GET request
+                    // sample : GET /?phone=+911234567890&message=HelloWorld HTTP/1.1
+                    String data = in.readLine();
 
-					// skip if no data was received
-					if (data == null) {
-						continue;
-					}
+                    // skip if no data was received
+                    if (data == null) {
+                        continue;
+                    }
 
-					// get the substring after GET /?
-					data = data.substring(6);
-					
-					// if the URL doesn't contain the sting phone, do nothing.
-					if (!data.contains("phone")) {
-						Log.i(TAG, "Invalid URL");
-						showAlert("Invalid URL");
-					} else {
-						// get the data before  HTTP/1.1
-						data = data.substring(0, data.length() - 9);
-						String[] myparams = data.split("&");
-						if (data.contains("=")) {
+                    // get the substring after GET /?
+                    data = data.substring(6);
+
+                    // if the URL doesn't contain the sting phone, do nothing.
+                    if (!data.contains("phone")) {
+                        Log.i(TAG, "Invalid URL");
+                        showAlert("Invalid URL");
+                    } else {
+                        // get the data before  HTTP/1.1
+                        data = data.substring(0, data.length() - 9);
+                        String[] myparams = data.split("&");
+                        if (data.contains("=")) {
                             // FIXME: missing &message raise exception
-							phoneNumber = myparams[0].split("=")[1];
-							message = URLDecoder.decode(myparams[1].split("=")[1], "UTF-8");
-							Log.i(TAG, "Got a request to sent an SMS.");
-							Log.i(TAG, "Phone Number: " + phoneNumber);
-							Log.i(TAG, "Message: " + message);
+                            phoneNumber = myparams[0].split("=")[1];
+                            message = URLDecoder.decode(myparams[1].split("=")[1], "UTF-8");
+                            Log.i(TAG, "Got a request to sent an SMS.");
+                            Log.i(TAG, "Phone Number: " + phoneNumber);
+                            Log.i(TAG, "Message: " + message);
 
-							sendSMS();
-						}
-					}
+                            sendSMS();
+                        }
+                    }
 
-					out.writeBytes("HTTP/1.1 200 OK \r\n");
-					out.writeBytes("Connection: close\r\n");
-					out.writeBytes("\r\n");
-					out.close();
-					in.close();
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			return null;
-		}
-	}
+                    out.writeBytes("HTTP/1.1 200 OK \r\n");
+                    out.writeBytes("Connection: close\r\n");
+                    out.writeBytes("\r\n");
+                    out.close();
+                    in.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
 }
